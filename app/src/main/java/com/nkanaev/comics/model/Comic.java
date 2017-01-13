@@ -1,59 +1,100 @@
 package com.nkanaev.comics.model;
 
-import java.io.File;
+import java.util.ArrayList;
 
 
-public class Comic implements Comparable {
+public class Comic {
     private Storage mShelf;
     private int mCurrentPage;
-    private int mNumPages;
-    private int mId;
-    private String mType;
-    private File mFile;
-    public final long updatedAt;
 
-    public Comic(Storage shelf, int id, String filepath, String filename,
-                 String type, int numPages, int currentPage, long updatedAt) {
-        mShelf = shelf;
-        mId = id;
-        mNumPages = numPages;
-        mCurrentPage = currentPage;
-        mFile = new File(filepath, filename);
-        mType = type;
-        this.updatedAt = updatedAt;
-    }
+    private String slug;
+    public String cover;
+    private String status;
 
-    public int getId() {
-        return mId;
-    }
+    private String url;
+    private String title;
+    private int num_issues;
+    private ArrayList<Genre> tags;
 
-    public File getFile() {
-        return mFile;
+    public String name;
+    private String alternate_name;
+    private int year;
+    private String author;
+    private ArrayList<Genre> genre;
+    private String description;
+    private ArrayList<Issue> issues;
+
+    public Storage getShelf() {
+        return mShelf;
     }
 
     public int getCurrentPage() {
         return mCurrentPage;
     }
 
-    public int getTotalPages() {
-        return mNumPages;
+    public String getSlug() {
+        return slug;
     }
 
-    public void setCurrentPage(int page) {
-        mShelf.bookmarkPage(getId(), page);
+    public String getCover() {
+        return cover;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public int getNumIssues() {
+        return num_issues;
+    }
+
+    public ArrayList<Genre> getTags() {
+        return tags;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getAlternateName() {
+        return alternate_name;
+    }
+
+    public int getYear() {
+        return year;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public ArrayList<Genre> getGenre() {
+        return genre;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public ArrayList<Issue> getIssues() {
+        return issues;
+    }
+
+    /*public void setCurrentPage(int page) {
+        mShelf.bookmarkPage(slug, page);
         mCurrentPage = page;
-    }
-
-    public String getType() {
-        return mType;
-    }
-
-    public int compareTo(Object another) {
-        return mFile.compareTo(((Comic) another).getFile());
-    }
+    }*/
 
     @Override
     public boolean equals(Object o) {
-        return (o instanceof Comic) && getId() == ((Comic)o).getId();
+        return (o instanceof Comic) && getSlug().equals(((Comic)o).getSlug());
     }
 }

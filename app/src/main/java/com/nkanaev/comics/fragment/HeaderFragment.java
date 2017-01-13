@@ -74,7 +74,7 @@ public class HeaderFragment extends Fragment
         ArrayList<Comic> comics = Storage.getStorage(getActivity()).listComics();
         if (comics.size() > 0) {
             Comic c = comics.get(new Random().nextInt(comics.size()));
-            mPicasso.load(LocalCoverHandler.getComicCoverUri(c)).into(this);
+            mPicasso.load(c.getUrl()).into(this);
         }
     }
 

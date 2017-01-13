@@ -138,16 +138,16 @@ public class LibraryBrowserFragment extends Fragment
     }
 
     public void openComic(Comic comic) {
-        if (!comic.getFile().exists()) {
+        /*if (!comic.getFile().exists()) {
             Toast.makeText(
                     getActivity(),
                     R.string.warning_missing_file,
                     Toast.LENGTH_SHORT).show();
             return;
-        }
+        }*/
 
         Intent intent = new Intent(getActivity(), ReaderActivity.class);
-        intent.putExtra(ReaderFragment.PARAM_HANDLER, comic.getId());
+        intent.putExtra(ReaderFragment.PARAM_HANDLER, comic.getSlug());
         intent.putExtra(ReaderFragment.PARAM_MODE, ReaderFragment.Mode.MODE_LIBRARY);
         startActivity(intent);
     }
@@ -162,18 +162,18 @@ public class LibraryBrowserFragment extends Fragment
         mRecentItems.clear();
 
         for (Comic c : mComics) {
-            if (c.updatedAt > 0) {
+            /*if (c.updatedAt > 0) {
                 mRecentItems.add(c);
-            }
+            }*/
         }
 
         if (mRecentItems.size() > 0) {
-            Collections.sort(mRecentItems, new Comparator<Comic>() {
+            /*Collections.sort(mRecentItems, new Comparator<Comic>() {
                 @Override
                 public int compare(Comic lhs, Comic rhs) {
                     return lhs.updatedAt > rhs.updatedAt ? -1 : 1;
                 }
-            });
+            });*/
         }
 
         if (mRecentItems.size() > Constants.MAX_RECENT_COUNT) {
@@ -187,10 +187,10 @@ public class LibraryBrowserFragment extends Fragment
         mAllItems.clear();
 
         for (Comic c : mComics) {
-            if (mFilterSearch.length() > 0 && !c.getFile().getName().contains(mFilterSearch))
+            if (mFilterSearch.length() > 0 && !c.getName().contains(mFilterSearch))
                 continue;
             if (mFilterRead != R.id.menu_browser_filter_all) {
-                if (mFilterRead == R.id.menu_browser_filter_read && c.getCurrentPage() != c.getTotalPages())
+                /*if (mFilterRead == R.id.menu_browser_filter_read && c.getCurrentPage() != c.getTotalPages())
                     continue;
                 if (mFilterRead == R.id.menu_browser_filter_unread && c.getCurrentPage() != 0)
                     continue;
@@ -198,7 +198,7 @@ public class LibraryBrowserFragment extends Fragment
                     continue;
                 if (mFilterRead == R.id.menu_browser_filter_reading &&
                         (c.getCurrentPage() == 0 || c.getCurrentPage() == c.getTotalPages()))
-                    continue;
+                    continue;*/
             }
             mAllItems.add(c);
         }
@@ -375,10 +375,10 @@ public class LibraryBrowserFragment extends Fragment
         }
 
         public void setupComic(Comic comic) {
-            mTitleTextView.setText(comic.getFile().getName());
-            mPagesTextView.setText(Integer.toString(comic.getCurrentPage()) + '/' + Integer.toString(comic.getTotalPages()));
+            mTitleTextView.setText(comic.getName());
+            //mPagesTextView.setText(Integer.toString(comic.getCurrentPage()) + '/' + Integer.toString(comic.getTotalPages()));
 
-            mPicasso.load(LocalCoverHandler.getComicCoverUri(comic))
+            mPicasso.load(comic.getUrl())
                     .into(mCoverView);
         }
 

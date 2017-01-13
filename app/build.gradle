@@ -45,4 +45,6 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'org.apache.commons:commons-compress:1.12'
     compile 'org.tukaani:xz:1.5'
+    compile 'com.loopj.android:android-async-http:1.4.9'
+    compile 'com.google.code.gson:gson:2.2.4'
 }

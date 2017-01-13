@@ -88,11 +88,11 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         RESOURCE_VIEW_MODE.put(R.id.view_mode_fit_width, Constants.PageViewMode.FIT_WIDTH);
     }
 
-    public static ReaderFragment create(int comicId) {
+    public static ReaderFragment create(String comicId) {
         ReaderFragment fragment = new ReaderFragment();
         Bundle args = new Bundle();
         args.putSerializable(PARAM_MODE, Mode.MODE_LIBRARY);
-        args.putInt(PARAM_HANDLER, comicId);
+        args.putString(PARAM_HANDLER, comicId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -117,7 +117,7 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         if (mode == Mode.MODE_LIBRARY) {
             int comicId = bundle.getInt(PARAM_HANDLER);
             mComic = Storage.getStorage(getActivity()).getComic(comicId);
-            file = mComic.getFile();
+            //file = mComic.getFile();
             mCurrentPage = mComic.getCurrentPage();
         }
         else if (mode == Mode.MODE_BROWSER) {
@@ -272,7 +272,7 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(STATE_FULLSCREEN, isFullscreen());
-        outState.putInt(STATE_NEW_COMIC, mNewComic != null ? mNewComic.getId() : -1);
+        outState.putString(STATE_NEW_COMIC, mNewComic != null ? mNewComic.getSlug() : "");
         outState.putInt(STATE_NEW_COMIC_TITLE, mNewComic != null ? mNewComicTitle : -1);
         super.onSaveInstanceState(outState);
     }
@@ -280,7 +280,7 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     @Override
     public void onPause() {
         if (mComic != null) {
-            mComic.setCurrentPage(getCurrentPage());
+            //mComic.setCurrentPage(getCurrentPage());
         }
         super.onPause();
     }
@@ -633,12 +633,12 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
 
         AlertDialog dialog = new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
                 .setTitle(titleRes)
-                .setMessage(newComic.getFile().getName())
+                .setMessage(newComic.getName())
                 .setPositiveButton(R.string.switch_action_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         ReaderActivity activity = (ReaderActivity) getActivity();
-                        activity.setFragment(ReaderFragment.create(mNewComic.getId()));
+                        activity.setFragment(ReaderFragment.create(mNewComic.getSlug()));
                     }
                 })
                 .setNegativeButton(R.string.switch_action_negative, new DialogInterface.OnClickListener() {

@@ -28,7 +28,7 @@ public class GroupImageView extends ImageView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int width = getMeasuredWidth();
-        setMeasuredDimension(width, width * 9 / 16);
+        setMeasuredDimension(width, width * 10 / 7);
     }
 
     @Override

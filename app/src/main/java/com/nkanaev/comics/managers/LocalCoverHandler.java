@@ -11,13 +11,12 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 
 import com.nkanaev.comics.Constants;
+import com.nkanaev.comics.model.Comic;
 import com.nkanaev.comics.parsers.Parser;
 import com.nkanaev.comics.parsers.ParserFactory;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Request;
 import com.squareup.picasso.RequestHandler;
-
-import com.nkanaev.comics.model.Comic;
 
 
 public class LocalCoverHandler extends RequestHandler {
@@ -66,14 +65,5 @@ public class LocalCoverHandler extends RequestHandler {
         }
 
         return coverFile.getAbsolutePath();
-    }
-
-
-    public static Uri getComicCoverUri(Comic comic) {
-        return new Uri.Builder()
-                .scheme(HANDLER_URI)
-                .path(comic.getFile().getAbsolutePath())
-                .fragment(comic.getType())
-                .build();
     }
 }

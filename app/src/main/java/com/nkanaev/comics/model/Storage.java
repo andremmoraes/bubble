@@ -16,7 +16,7 @@ public class Storage {
     public static abstract class Book implements BaseColumns {
         public static final String TABLE_NAME = "book";
 
-        public static final String COLUMN_NAME_ID = "id";
+        public static final String COLUMN_NAME_SLUG = "id";
         public static final String COLUMN_NAME_FILEPATH = "path";
         public static final String COLUMN_NAME_FILENAME = "name";
         public static final String COLUMN_NAME_NUM_PAGES = "num_pages";
@@ -25,7 +25,7 @@ public class Storage {
         public static final String COLUMN_NAME_UPDATED_AT = "updated_at";
 
         public static final String[] columns = {
-                Book.COLUMN_NAME_ID,
+                Book.COLUMN_NAME_SLUG,
                 Book.COLUMN_NAME_FILEPATH,
                 Book.COLUMN_NAME_FILENAME,
                 Book.COLUMN_NAME_NUM_PAGES,
@@ -46,7 +46,7 @@ public class Storage {
         @Override
         public void onCreate(SQLiteDatabase db) {
             final String sql = "CREATE TABLE " + Book.TABLE_NAME + " ("
-                    + Book.COLUMN_NAME_ID + " INTEGER PRIMARY KEY,"
+                    + Book.COLUMN_NAME_SLUG + " TEXT PRIMARY KEY,"
                     + Book.COLUMN_NAME_FILEPATH + " TEXT,"
                     + Book.COLUMN_NAME_FILENAME + " TEXT,"
                     + Book.COLUMN_NAME_NUM_PAGES + " INTEGER,"
@@ -157,7 +157,7 @@ public class Storage {
     public Comic getComic(int comicId) {
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
         String order = Book.COLUMN_NAME_FILEPATH + " DESC";
-        String selection = Book.COLUMN_NAME_ID + "=" + Integer.toString(comicId);
+        String selection = Book.COLUMN_NAME_SLUG + "=" + Integer.toString(comicId);
         Cursor c = db.query(Book.TABLE_NAME, Book.columns, selection, null, null, null, order);
 
         if (c.getCount() != 1) {
@@ -172,7 +172,7 @@ public class Storage {
     }
 
     private Comic comicFromCursor(Cursor c) {
-        int id = c.getInt(c.getColumnIndex(Book.COLUMN_NAME_ID));
+        int id = c.getInt(c.getColumnIndex(Book.COLUMN_NAME_SLUG));
         String path = c.getString(c.getColumnIndex(Book.COLUMN_NAME_FILEPATH));
         String name = c.getString(c.getColumnIndex(Book.COLUMN_NAME_FILENAME));
         int numPages = c.getInt(c.getColumnIndex(Book.COLUMN_NAME_NUM_PAGES));
@@ -180,37 +180,32 @@ public class Storage {
         String type = c.getString(c.getColumnIndex(Book.COLUMN_NAME_TYPE));
         long updatedAt = c.getLong(c.getColumnIndex(Book.COLUMN_NAME_UPDATED_AT));
 
-        return new Comic(this, id, path, name, type, numPages, currentPage, updatedAt);
+        //return new Comic(this, id, path, name, type, numPages, currentPage, updatedAt);
+        return null;
     }
 
-    public void bookmarkPage(int comicId, int page) {
+    public void bookmarkPage(String comicId, int page) {
         ContentValues values = new ContentValues();
         values.put(Book.COLUMN_NAME_CURRENT_PAGE, page);
         values.put(Book.COLUMN_NAME_UPDATED_AT, System.currentTimeMillis() / 1000);
-        String filter = Book.COLUMN_NAME_ID + "=" + Integer.toString(comicId);
+        String filter = Book.COLUMN_NAME_SLUG + "=" + comicId;
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
         db.update(Book.TABLE_NAME, values, filter, null);
     }
 
     public void removeComic(int comicId) {
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        String whereClause = Book.COLUMN_NAME_ID + '=' + Integer.toString(comicId);
+        String whereClause = Book.COLUMN_NAME_SLUG + '=' + Integer.toString(comicId);
         db.delete(Book.TABLE_NAME, whereClause, null);
     }
 
     public Comic getPrevComic(Comic comic) {
-        ArrayList<Comic> comics = listComics(comic.getFile().getParent());
-        int idx = comics.indexOf(comic);
-        if (idx != 0)
-            return comics.get(idx-1);
+
         return null;
     }
 
     public Comic getNextComic(Comic comic) {
-        ArrayList<Comic> comics = listComics(comic.getFile().getParent());
-        int idx = comics.indexOf(comic);
-        if (idx != (comics.size() - 1))
-            return comics.get(idx+1);
+
         return null;
     }
 }

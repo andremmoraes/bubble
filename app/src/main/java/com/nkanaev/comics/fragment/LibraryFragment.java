@@ -9,22 +9,34 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.*;
 import android.widget.*;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.nkanaev.comics.Constants;
 import com.nkanaev.comics.MainApplication;
 import com.nkanaev.comics.R;
 import com.nkanaev.comics.activity.MainActivity;
-import com.nkanaev.comics.managers.DirectoryListingManager;
+import com.nkanaev.comics.managers.ComicsListingManager;
 import com.nkanaev.comics.managers.LocalCoverHandler;
 import com.nkanaev.comics.managers.Scanner;
 import com.nkanaev.comics.managers.Utils;
 import com.nkanaev.comics.model.Comic;
+import com.nkanaev.comics.model.ReadComicsAPI;
 import com.nkanaev.comics.model.Storage;
 import com.nkanaev.comics.view.DirectorySelectDialog;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.List;
+
+import cz.msebera.android.httpclient.Header;
 
 
 public class LibraryFragment extends Fragment
@@ -34,7 +46,7 @@ public class LibraryFragment extends Fragment
         SwipeRefreshLayout.OnRefreshListener {
     private final static String BUNDLE_DIRECTORY_DIALOG_SHOWN = "BUNDLE_DIRECTORY_DIALOG_SHOWN";
 
-    private DirectoryListingManager mComicsListManager;
+    private ComicsListingManager mComicsListManager;
     private DirectorySelectDialog mDirectorySelectDialog;
     private SwipeRefreshLayout mRefreshLayout;
     private View mEmptyView;
@@ -60,7 +72,7 @@ public class LibraryFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        Scanner.getInstance().addUpdateHandler(mUpdateHandler);
+        //Scanner.getInstance().addUpdateHandler(mUpdateHandler);
         if (Scanner.getInstance().isRunning()) {
             setLoading(true);
         }
@@ -84,7 +96,6 @@ public class LibraryFragment extends Fragment
         mRefreshLayout.setEnabled(true);
 
         mGridView = (GridView) view.findViewById(R.id.groupGridView);
-        mGridView.setAdapter(new GroupBrowserAdapter());
         mGridView.setOnItemClickListener(this);
 
         mEmptyView = view.findViewById(R.id.library_empty);
@@ -94,8 +105,8 @@ public class LibraryFragment extends Fragment
         int numColumns = Math.round((float) deviceWidth / columnWidth);
         mGridView.setNumColumns(numColumns);
 
-        showEmptyMessage(mComicsListManager.getCount() == 0);
-        getActivity().setTitle(R.string.menu_library);
+        showEmptyMessage(false);
+        getActivity().setTitle("Popular");
 
         return view;
     }
@@ -105,19 +116,6 @@ public class LibraryFragment extends Fragment
         menu.clear();
         inflater.inflate(R.menu.library, menu);
         super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menuLibrarySetDir) {
-            if (Scanner.getInstance().isRunning()) {
-                Scanner.getInstance().stop();
-            }
-
-            mDirectorySelectDialog.show();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -141,9 +139,11 @@ public class LibraryFragment extends Fragment
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        /*
         String path = mComicsListManager.getDirectoryAtIndex(position);
         LibraryBrowserFragment fragment = LibraryBrowserFragment.create(path);
         ((MainActivity)getActivity()).pushFragment(fragment);
+        */
     }
 
     @Override
@@ -155,8 +155,27 @@ public class LibraryFragment extends Fragment
     }
 
     private void getComics() {
-        List<Comic> comics = Storage.getStorage(getActivity()).listDirectoryComics();
-        mComicsListManager = new DirectoryListingManager(comics, getLibraryDir());
+        ReadComicsAPI.get("comics/popular", null, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                List<Comic> comicsList = new ArrayList<Comic>();
+                try {
+                    JSONArray comics = response.getJSONArray("comics");
+                    for (int i = 0; i < comics.length(); i++) {
+                        JSONObject jComic = comics.getJSONObject(i);
+                        Comic comic = new Comic();
+                        comic.name = jComic.getString("title");
+                        comic.cover = jComic.getString("cover");
+                        comicsList.add(comic);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mComicsListManager = new ComicsListingManager(comicsList);
+                mGridView.setAdapter(new GroupBrowserAdapter());
+
+            }
+        });
     }
 
     private void refreshLibraryDelayed() {
@@ -241,7 +260,6 @@ public class LibraryFragment extends Fragment
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             Comic comic = mComicsListManager.getComicAtIndex(position);
-            String dirDisplay = mComicsListManager.getDirectoryDisplayAtIndex(position);
 
             if (convertView == null) {
                 convertView = getActivity().getLayoutInflater().inflate(R.layout.card_group, parent, false);
@@ -249,11 +267,11 @@ public class LibraryFragment extends Fragment
 
             ImageView groupImageView = (ImageView)convertView.findViewById(R.id.card_group_imageview);
 
-            mPicasso.load(LocalCoverHandler.getComicCoverUri(comic))
+            mPicasso.load(comic.getCover())
                     .into(groupImageView);
 
             TextView tv = (TextView) convertView.findViewById(R.id.comic_group_folder);
-            tv.setText(dirDisplay);
+            tv.setText(comic.getName());
 
             return convertView;
         }

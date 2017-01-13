@@ -114,7 +114,7 @@ public class Scanner {
 
                 // create list of files available in storage
                 for (Comic c : storage.listComics()) {
-                    storageFiles.put(c.getFile(), c);
+                    //storageFiles.put(c.getFile(), c);
                 }
 
                 // search and add comics if necessary
@@ -144,9 +144,9 @@ public class Scanner {
 
                 // delete missing comics
                 for (Comic missing : storageFiles.values()) {
-                    File coverCache = Utils.getCacheFile(ctx, missing.getFile().getAbsolutePath());
-                    coverCache.delete();
-                    storage.removeComic(missing.getId());
+                    //File coverCache = Utils.getCacheFile(ctx, missing.getFile().getAbsolutePath());
+                    //coverCache.delete();
+                    //storage.removeComic(missing.getId());
                 }
             }
             finally {
