@@ -12,26 +12,31 @@ import android.support.v7.widget.SearchView;
 import android.view.*;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.nkanaev.comics.Constants;
 import com.nkanaev.comics.R;
 import com.nkanaev.comics.activity.MainActivity;
 import com.nkanaev.comics.activity.ReaderActivity;
-import com.nkanaev.comics.managers.LocalCoverHandler;
 import com.nkanaev.comics.managers.Utils;
 import com.nkanaev.comics.model.Comic;
-import com.nkanaev.comics.model.Storage;
+import com.nkanaev.comics.model.Issue;
+import com.nkanaev.comics.model.ReadComicsAPI;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+
+import cz.msebera.android.httpclient.Header;
 
 public class LibraryBrowserFragment extends Fragment
         implements SearchView.OnQueryTextListener {
-    public static final String PARAM_PATH = "browserCurrentPath";
+    public static final String PARAM_SLUG = "slug";
+    public static final String PARAM_URL = "url";
+    public static final String PARAM_NAME = "name";
 
     final int ITEM_VIEW_TYPE_COMIC = 1;
     final int ITEM_VIEW_TYPE_HEADER_RECENT = 2;
@@ -39,21 +44,25 @@ public class LibraryBrowserFragment extends Fragment
 
     final int NUM_HEADERS = 2;
 
-    private List<Comic> mComics = new ArrayList<>();
-    private List<Comic> mAllItems = new ArrayList<>();
-    private List<Comic> mRecentItems = new ArrayList<>();
+    private List<Issue> mIssues = new ArrayList<>();
+    private List<Issue> mAllItems = new ArrayList<>();
+    private List<Issue> mRecentItems = new ArrayList<>();
 
-    private String mPath;
+    private String mSlug;
+    private String mUrl;
+    private String mName;
     private String mFilterSearch = "";
     private Picasso mPicasso;
     private int mFilterRead = R.id.menu_browser_filter_all;
 
     private RecyclerView mComicListView;
 
-    public static LibraryBrowserFragment create(String path) {
+    public static LibraryBrowserFragment create(String slug, String name) {
         LibraryBrowserFragment fragment = new LibraryBrowserFragment();
         Bundle args = new Bundle();
-        args.putString(PARAM_PATH, path);
+        args.putString(PARAM_SLUG, slug);
+        args.putString(PARAM_URL, ReadComicsAPI.getAbsoluteUrl("comic/" + slug));
+        args.putString(PARAM_NAME, name);
         fragment.setArguments(args);
         return fragment;
     }
@@ -63,7 +72,8 @@ public class LibraryBrowserFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPath = getArguments().getString(PARAM_PATH);
+        mSlug = getArguments().getString(PARAM_SLUG);
+        mUrl = getArguments().getString(PARAM_URL);
         getComics();
         setHasOptionsMenu(true);
     }
@@ -84,7 +94,7 @@ public class LibraryBrowserFragment extends Fragment
         mComicListView.setAdapter(new ComicGridAdapter());
         mComicListView.addItemDecoration(new GridSpacingItemDecoration(numColumns, spacing));
 
-        getActivity().setTitle(new File(getArguments().getString(PARAM_PATH)).getName());
+        getActivity().setTitle(mName);
         mPicasso = ((MainActivity) getActivity()).getPicasso();
 
         return view;
@@ -137,7 +147,7 @@ public class LibraryBrowserFragment extends Fragment
         return true;
     }
 
-    public void openComic(Comic comic) {
+    public void openComic(Issue comic) {
         /*if (!comic.getFile().exists()) {
             Toast.makeText(
                     getActivity(),
@@ -147,21 +157,27 @@ public class LibraryBrowserFragment extends Fragment
         }*/
 
         Intent intent = new Intent(getActivity(), ReaderActivity.class);
-        intent.putExtra(ReaderFragment.PARAM_HANDLER, comic.getSlug());
+        //intent.putExtra(ReaderFragment.PARAM_HANDLER, comic.getSlug());
         intent.putExtra(ReaderFragment.PARAM_MODE, ReaderFragment.Mode.MODE_LIBRARY);
         startActivity(intent);
     }
 
     private void getComics() {
-        mComics = Storage.getStorage(getActivity()).listComics(mPath);
-        findRecents();
-        filterContent();
+        ReadComicsAPI.get("comic/" + mSlug, null, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Comic comic = new Gson().fromJson(response.toString(), Comic.class);
+                mIssues = comic.getIssues();
+                findRecents();
+                filterContent();
+            }
+        });
     }
 
     private void findRecents() {
         mRecentItems.clear();
 
-        for (Comic c : mComics) {
+        for (Issue c : mIssues) {
             /*if (c.updatedAt > 0) {
                 mRecentItems.add(c);
             }*/
@@ -170,7 +186,7 @@ public class LibraryBrowserFragment extends Fragment
         if (mRecentItems.size() > 0) {
             /*Collections.sort(mRecentItems, new Comparator<Comic>() {
                 @Override
-                public int compare(Comic lhs, Comic rhs) {
+                public int compare(Issue lhs, Issue rhs) {
                     return lhs.updatedAt > rhs.updatedAt ? -1 : 1;
                 }
             });*/
@@ -186,7 +202,7 @@ public class LibraryBrowserFragment extends Fragment
     private void filterContent() {
         mAllItems.clear();
 
-        for (Comic c : mComics) {
+        for (Issue c : mIssues) {
             if (mFilterSearch.length() > 0 && !c.getName().contains(mFilterSearch))
                 continue;
             if (mFilterRead != R.id.menu_browser_filter_all) {
@@ -208,8 +224,8 @@ public class LibraryBrowserFragment extends Fragment
         }
     }
 
-    private Comic getComicAtPosition(int position) {
-        Comic comic;
+    private Issue getComicAtPosition(int position) {
+        Issue comic;
         if (hasRecent()) {
             if (position > 0 && position < mRecentItems.size() + 1)
                 comic = mRecentItems.get(position - 1);
@@ -342,7 +358,7 @@ public class LibraryBrowserFragment extends Fragment
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int i) {
             if (viewHolder.getItemViewType() == ITEM_VIEW_TYPE_COMIC) {
-                Comic comic = getComicAtPosition(i);
+                Issue comic = getComicAtPosition(i);
                 ComicViewHolder holder = (ComicViewHolder) viewHolder;
                 holder.setupComic(comic);
             }
@@ -368,24 +384,24 @@ public class LibraryBrowserFragment extends Fragment
             super(itemView);
             mCoverView = (ImageView) itemView.findViewById(R.id.comicImageView);
             mTitleTextView = (TextView) itemView.findViewById(R.id.comicTitleTextView);
-            mPagesTextView = (TextView) itemView.findViewById(R.id.comicPagerTextView);
+            //mPagesTextView = (TextView) itemView.findViewById(R.id.comicPagerTextView);
 
             itemView.setClickable(true);
             itemView.setOnClickListener(this);
         }
 
-        public void setupComic(Comic comic) {
+        public void setupComic(Issue comic) {
             mTitleTextView.setText(comic.getName());
             //mPagesTextView.setText(Integer.toString(comic.getCurrentPage()) + '/' + Integer.toString(comic.getTotalPages()));
 
-            mPicasso.load(comic.getUrl())
+            mPicasso.load(comic.getCover())
                     .into(mCoverView);
         }
 
         @Override
         public void onClick(View v) {
             int i = getAdapterPosition();
-            Comic comic = getComicAtPosition(i);
+            Issue comic = getComicAtPosition(i);
             openComic(comic);
         }
     }

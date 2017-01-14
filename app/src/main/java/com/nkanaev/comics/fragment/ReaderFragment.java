@@ -118,7 +118,8 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
             int comicId = bundle.getInt(PARAM_HANDLER);
             mComic = Storage.getStorage(getActivity()).getComic(comicId);
             //file = mComic.getFile();
-            mCurrentPage = mComic.getCurrentPage();
+            //mCurrentPage = mComic.getCurrentPage();
+            mCurrentPage = 0; // TODO
         }
         else if (mode == Mode.MODE_BROWSER) {
             file = (File) bundle.getSerializable(PARAM_HANDLER);

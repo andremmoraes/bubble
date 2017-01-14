@@ -6,11 +6,16 @@ package com.nkanaev.comics.model;
 
 public class Issue {
     private String url;
+    private String cover;
     private String name;
     private String date;
 
     public String getUrl() {
         return url;
+    }
+
+    public String getCover() {
+        return cover;
     }
 
     public String getName() {

@@ -19,7 +19,7 @@ public class CoverImageView extends ImageView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int width = getMeasuredWidth();
-        setMeasuredDimension(width, width * 4 / 3);
+        setMeasuredDimension(width, width * 11 / 7);
     }
 
     @Override
