@@ -148,17 +148,11 @@ public class LibraryBrowserFragment extends Fragment
         return true;
     }
 
-    public void openComic(Issue comic) {
-        /*if (!comic.getFile().exists()) {
-            Toast.makeText(
-                    getActivity(),
-                    R.string.warning_missing_file,
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }*/
-
+    public void openComic(Issue issue) {
         Intent intent = new Intent(getActivity(), ReaderActivity.class);
-        //intent.putExtra(ReaderFragment.PARAM_HANDLER, comic.getSlug());
+        intent.putExtra(ReaderFragment.PARAM_HANDLER, mSlug);
+        intent.putExtra(ReaderFragment.PARAM_NAME, issue.getName());
+        intent.putExtra(ReaderFragment.PARAM_CHAPTER, issue.getChapter());
         intent.putExtra(ReaderFragment.PARAM_MODE, ReaderFragment.Mode.MODE_LIBRARY);
         startActivity(intent);
     }
@@ -225,18 +219,18 @@ public class LibraryBrowserFragment extends Fragment
         }
     }
 
-    private Issue getComicAtPosition(int position) {
-        Issue comic;
+    private Issue getIssueAtPosition(int position) {
+        Issue issue;
         if (hasRecent()) {
             if (position > 0 && position < mRecentItems.size() + 1)
-                comic = mRecentItems.get(position - 1);
+                issue = mRecentItems.get(position - 1);
             else
-                comic = mAllItems.get(position - mRecentItems.size() - NUM_HEADERS);
+                issue = mAllItems.get(position - mRecentItems.size() - NUM_HEADERS);
         }
         else {
-            comic = mAllItems.get(position);
+            issue = mAllItems.get(position);
         }
-        return comic;
+        return issue;
     }
 
     private int getItemViewTypeAtPosition(int position) {
@@ -359,7 +353,7 @@ public class LibraryBrowserFragment extends Fragment
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int i) {
             if (viewHolder.getItemViewType() == ITEM_VIEW_TYPE_COMIC) {
-                Issue comic = getComicAtPosition(i);
+                Issue comic = getIssueAtPosition(i);
                 ComicViewHolder holder = (ComicViewHolder) viewHolder;
                 holder.setupComic(comic);
             }
@@ -402,8 +396,8 @@ public class LibraryBrowserFragment extends Fragment
         @Override
         public void onClick(View v) {
             int i = getAdapterPosition();
-            Issue comic = getComicAtPosition(i);
-            openComic(comic);
+            Issue issue = getIssueAtPosition(i);
+            openComic(issue);
         }
     }
 }

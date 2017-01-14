@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.content.Context;
 import android.os.Handler;
@@ -19,12 +20,16 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.PagerAdapter;
 
+import com.google.gson.Gson;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.nkanaev.comics.Constants;
 import com.nkanaev.comics.R;
-import com.nkanaev.comics.activity.ReaderActivity;
 import com.nkanaev.comics.managers.LocalComicHandler;
+import com.nkanaev.comics.managers.ReadComicsNetworkComicHandler;
 import com.nkanaev.comics.managers.Utils;
+import com.nkanaev.comics.model.Chapter;
 import com.nkanaev.comics.model.Comic;
+import com.nkanaev.comics.model.ReadComicsAPI;
 import com.nkanaev.comics.model.Storage;
 import com.nkanaev.comics.parsers.ParserFactory;
 import com.nkanaev.comics.parsers.RarParser;
@@ -34,9 +39,13 @@ import com.nkanaev.comics.parsers.Parser;
 
 import com.squareup.picasso.*;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+
+import cz.msebera.android.httpclient.Header;
 
 
 public class ReaderFragment extends Fragment implements View.OnTouchListener {
@@ -45,6 +54,8 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     public static final String RESULT_CURRENT_PAGE = "fragment.reader.currentpage";
 
     public static final String PARAM_HANDLER = "PARAM_HANDLER";
+    public static final String PARAM_NAME = "PARAM_NAME";
+    public static final String PARAM_CHAPTER = "PARAM_CHAPTER";
     public static final String PARAM_MODE = "PARAM_MODE";
 
     public static final String STATE_FULLSCREEN = "STATE_FULLSCREEN";
@@ -69,12 +80,17 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
 
     private Parser mParser;
     private Picasso mPicasso;
-    private LocalComicHandler mComicHandler;
+    private RequestHandler mComicHandler;
     private SparseArray<Target> mTargets = new SparseArray<>();
 
-    private Comic mComic;
-    private Comic mNewComic;
+    private Chapter mChapter;
+    private Chapter mNewComic;
     private int mNewComicTitle;
+
+    private Mode mMode;
+    private String mSlug;
+    private String mName;
+    private int mChapterNum;
 
     public enum Mode {
         MODE_LIBRARY,
@@ -88,11 +104,12 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         RESOURCE_VIEW_MODE.put(R.id.view_mode_fit_width, Constants.PageViewMode.FIT_WIDTH);
     }
 
-    public static ReaderFragment create(String comicId) {
+    public static ReaderFragment create(String comicId, int chapter) {
         ReaderFragment fragment = new ReaderFragment();
         Bundle args = new Bundle();
         args.putSerializable(PARAM_MODE, Mode.MODE_LIBRARY);
         args.putString(PARAM_HANDLER, comicId);
+        args.putInt(PARAM_CHAPTER, chapter);
         fragment.setArguments(args);
         return fragment;
     }
@@ -113,26 +130,64 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         Bundle bundle = getArguments();
         Mode mode = (Mode) bundle.getSerializable(PARAM_MODE);
 
-        File file = null;
+        mMode = mode;
+
         if (mode == Mode.MODE_LIBRARY) {
-            int comicId = bundle.getInt(PARAM_HANDLER);
-            mComic = Storage.getStorage(getActivity()).getComic(comicId);
-            //file = mComic.getFile();
-            //mCurrentPage = mComic.getCurrentPage();
-            mCurrentPage = 0; // TODO
+            mSlug = bundle.getString(PARAM_HANDLER);
+            mName = bundle.getString(PARAM_NAME);
+            mChapterNum = bundle.getInt(PARAM_CHAPTER);
+            //mChapter = Storage.getStorage(getActivity()).getComic(comicId);
+            //file = mChapter.getFile();
+            ReadComicsAPI.get("comic/" + mSlug + "/" + mChapterNum, null, new JsonHttpResponseHandler() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                    mChapter = new Gson().fromJson(response.toString(), Chapter.class);
+                    mCurrentPage = 0; // TODO mCurrentPage = mChapter.getCurrentPage();
+                    mFilename = mSlug;
+
+                    mCurrentPage = Math.max(1, Math.min(mCurrentPage, mChapter.getPages().size()));
+
+                    mComicHandler = new ReadComicsNetworkComicHandler(mChapter.getPages());
+                    mPicasso = new Picasso.Builder(getActivity())
+                            .addRequestHandler(mComicHandler)
+                            .build();
+
+                    mPageSeekBar.setMax(mChapter.getPages().size() - 1);
+                    if (mCurrentPage != -1) {
+                        setCurrentPage(mCurrentPage);
+                        mCurrentPage = -1;
+                    }
+                    mViewPager.setAdapter(mPagerAdapter);
+                }
+            });
         }
         else if (mode == Mode.MODE_BROWSER) {
-            file = (File) bundle.getSerializable(PARAM_HANDLER);
+            File file = (File) bundle.getSerializable(PARAM_HANDLER);
+            mParser = ParserFactory.create(file);
+            mFilename = file.getName();
+
+            mCurrentPage = Math.max(1, Math.min(mCurrentPage, mParser.numPages()));
+
+            mComicHandler = new LocalComicHandler(mParser);
+            mPicasso = new Picasso.Builder(getActivity())
+                    .addRequestHandler(mComicHandler)
+                    .build();
+
+            // workaround: extract rar achive
+            if (mParser instanceof RarParser) {
+                File cacheDir = new File(getActivity().getExternalCacheDir(), "c");
+                if (!cacheDir.exists()) {
+                    cacheDir.mkdir();
+                }
+                else {
+                    for (File f : cacheDir.listFiles()) {
+                        f.delete();
+                    }
+                }
+                ((RarParser)mParser).setCacheDirectory(cacheDir);
+            }
         }
-        mParser = ParserFactory.create(file);
-        mFilename = file.getName();
 
-        mCurrentPage = Math.max(1, Math.min(mCurrentPage, mParser.numPages()));
-
-        mComicHandler = new LocalComicHandler(mParser);
-        mPicasso = new Picasso.Builder(getActivity())
-                .addRequestHandler(mComicHandler)
-                .build();
         mPagerAdapter = new ComicPagerAdapter();
         mGestureDetector = new GestureDetector(getActivity(), new MyTouchListener());
 
@@ -143,20 +198,6 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         mPageViewMode = Constants.PageViewMode.values()[viewModeInt];
         mIsLeftToRight = mPreferences.getBoolean(Constants.SETTINGS_READING_LEFT_TO_RIGHT, true);
 
-        // workaround: extract rar achive
-        if (mParser instanceof RarParser) {
-            File cacheDir = new File(getActivity().getExternalCacheDir(), "c");
-            if (!cacheDir.exists()) {
-                cacheDir.mkdir();
-            }
-            else {
-                for (File f : cacheDir.listFiles()) {
-                    f.delete();
-                }
-            }
-            ((RarParser)mParser).setCacheDirectory(cacheDir);
-        }
-
         setHasOptionsMenu(true);
     }
 
@@ -166,7 +207,9 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
 
         mPageNavLayout = (LinearLayout) getActivity().findViewById(R.id.pageNavLayout);
         mPageSeekBar = (SeekBar) mPageNavLayout.findViewById(R.id.pageSeekBar);
-        mPageSeekBar.setMax(mParser.numPages() - 1);
+        if (mMode == Mode.MODE_BROWSER) {
+            mPageSeekBar.setMax(mParser.numPages() - 1);
+        }
         mPageSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -190,7 +233,9 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         });
         mPageNavTextView = (TextView) mPageNavLayout.findViewById(R.id.pageNavTextView);
         mViewPager = (ComicViewPager) view.findViewById(R.id.viewPager);
-        mViewPager.setAdapter(mPagerAdapter);
+        if (mMode == Mode.MODE_BROWSER) {
+            mViewPager.setAdapter(mPagerAdapter);
+        }
         mViewPager.setOffscreenPageLimit(3);
         mViewPager.setOnTouchListener(this);
         mViewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -222,7 +267,7 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
             }
         });
 
-        if (mCurrentPage != -1) {
+        if (mMode == Mode.MODE_BROWSER && mCurrentPage != -1) {
             setCurrentPage(mCurrentPage);
             mCurrentPage = -1;
         }
@@ -234,13 +279,17 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
             int newComicId = savedInstanceState.getInt(STATE_NEW_COMIC);
             if (newComicId != -1) {
                 int titleRes = savedInstanceState.getInt(STATE_NEW_COMIC_TITLE);
-                confirmSwitch(Storage.getStorage(getActivity()).getComic(newComicId), titleRes);
+                //confirmSwitch(Storage.getStorage(getActivity()).getComic(newComicId), titleRes);
             }
         }
         else {
             setFullscreen(true);
         }
-        getActivity().setTitle(mFilename);
+        if (mMode == Mode.MODE_LIBRARY) {
+            getActivity().setTitle(mName);
+        } else {
+            getActivity().setTitle(mFilename);
+        }
         updateSeekBar();
 
         return view;
@@ -273,15 +322,15 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putBoolean(STATE_FULLSCREEN, isFullscreen());
-        outState.putString(STATE_NEW_COMIC, mNewComic != null ? mNewComic.getSlug() : "");
+        outState.putString(STATE_NEW_COMIC, mNewComic != null ? mSlug : "");
         outState.putInt(STATE_NEW_COMIC_TITLE, mNewComic != null ? mNewComicTitle : -1);
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onPause() {
-        if (mComic != null) {
-            //mComic.setCurrentPage(getCurrentPage());
+        if (mChapter != null) {
+            //mChapter.setCurrentPage(getCurrentPage());
         }
         super.onPause();
     }
@@ -352,8 +401,14 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
             mPageSeekBar.setProgress(mViewPager.getAdapter().getCount() - page);
         }
 
+        int numPages;
+        if (mMode == Mode.MODE_LIBRARY) {
+            numPages = mChapter.getPages().size();
+        } else {
+            numPages = mParser.numPages();
+        }
         String navPage = new StringBuilder()
-                .append(page).append("/").append(mParser.numPages())
+                .append(page).append("/").append(numPages)
                 .toString();
 
         mPageNavTextView.setText(navPage);
@@ -367,6 +422,9 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
 
         @Override
         public int getCount() {
+            if (mMode == Mode.MODE_LIBRARY) {
+                return mChapter.getPages().size();
+            }
             return mParser.numPages();
         }
 
@@ -425,7 +483,14 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
             pos = mViewPager.getAdapter().getCount() - t.position - 1;
         }
 
-        mPicasso.load(mComicHandler.getPageUri(pos))
+        Uri uri;
+        if (mMode == Mode.MODE_LIBRARY) {
+            uri = ((ReadComicsNetworkComicHandler)mComicHandler).getPageUri(pos);
+        } else {
+            uri = ((LocalComicHandler)mComicHandler).getPageUri(pos);
+        }
+
+        mPicasso.load(uri)
                 .memoryPolicy(MemoryPolicy.NO_STORE)
                 .tag(getActivity())
                 .resize(Constants.MAX_PAGE_WIDTH, Constants.MAX_PAGE_HEIGHT)
@@ -612,34 +677,35 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     }
 
     private void hitBeginning() {
-        if (mComic != null) {
-            Comic c = Storage.getStorage(getActivity()).getPrevComic(mComic);
-            confirmSwitch(c, R.string.switch_prev_comic);
+        if (mChapter != null) {
+            //Comic c = Storage.getStorage(getActivity()).getPrevComic(mChapter);
+            //confirmSwitch(c, R.string.switch_prev_comic);
         }
     }
 
     private void hitEnding() {
-        if (mComic != null) {
-            Comic c = Storage.getStorage(getActivity()).getNextComic(mComic);
-            confirmSwitch(c, R.string.switch_next_comic);
+        if (mChapter != null) {
+            //Comic c = Storage.getStorage(getActivity()).getNextComic(mChapter);
+            //confirmSwitch(c, R.string.switch_next_comic);
         }
     }
 
-    private void confirmSwitch(Comic newComic, int titleRes) {
-        if (newComic == null)
+    private void confirmSwitch(Chapter newChapter, int titleRes) {
+        if (newChapter == null)
             return;
 
-        mNewComic = newComic;
+        mNewComic = newChapter;
         mNewComicTitle = titleRes;
 
         AlertDialog dialog = new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
                 .setTitle(titleRes)
-                .setMessage(newComic.getName())
+//                .setMessage(newComic.getName())
                 .setPositiveButton(R.string.switch_action_positive, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ReaderActivity activity = (ReaderActivity) getActivity();
-                        activity.setFragment(ReaderFragment.create(mNewComic.getSlug()));
+                        //ReaderActivity activity = (ReaderActivity) getActivity();
+                        //activity.setFragment(ReaderFragment.create(mNewComic.getSlug()));
+                        mNewComic = null;
                     }
                 })
                 .setNegativeButton(R.string.switch_action_negative, new DialogInterface.OnClickListener() {

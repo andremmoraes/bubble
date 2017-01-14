@@ -140,7 +140,6 @@ public class LibraryFragment extends Fragment
                 List<ComicPreview> comicsList = new ArrayList<>();
                 try {
                     JSONArray comics = response.getJSONArray("comics");
-                    Log.d("test", comics.toString());
                     Type comicType = new TypeToken<List<ComicPreview>>(){}.getType();
                     comicsList = new Gson().fromJson(comics.toString(), comicType);
                 } catch (JSONException e) {
