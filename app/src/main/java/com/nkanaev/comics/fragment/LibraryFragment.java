@@ -7,11 +7,13 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.nkanaev.comics.Constants;
 import com.nkanaev.comics.MainApplication;
@@ -22,6 +24,7 @@ import com.nkanaev.comics.managers.LocalCoverHandler;
 import com.nkanaev.comics.managers.Scanner;
 import com.nkanaev.comics.managers.Utils;
 import com.nkanaev.comics.model.Comic;
+import com.nkanaev.comics.model.ComicPreview;
 import com.nkanaev.comics.model.ReadComicsAPI;
 import com.nkanaev.comics.model.Storage;
 import com.nkanaev.comics.view.DirectorySelectDialog;
@@ -33,6 +36,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,38 +124,31 @@ public class LibraryFragment extends Fragment
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        /*
-        String path = mComicsListManager.getDirectoryAtIndex(position);
-        LibraryBrowserFragment fragment = LibraryBrowserFragment.create(path);
+        ComicPreview comic = mComicsListManager.getComicAtIndex(position);
+        LibraryBrowserFragment fragment = LibraryBrowserFragment.create(comic.getSlug(), comic.getTitle());
         ((MainActivity)getActivity()).pushFragment(fragment);
-        */
     }
 
     @Override
     public void onRefresh() {
-        //setLoading(true); // TODO
+        setLoading(false); // TODO
     }
 
     private void getComics() {
         ReadComicsAPI.get("comics/popular", null, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                List<Comic> comicsList = new ArrayList<Comic>();
+                List<ComicPreview> comicsList = new ArrayList<>();
                 try {
                     JSONArray comics = response.getJSONArray("comics");
-                    for (int i = 0; i < comics.length(); i++) {
-                        JSONObject jComic = comics.getJSONObject(i);
-                        Comic comic = new Comic();
-                        comic.name = jComic.getString("title");
-                        comic.cover = jComic.getString("cover");
-                        comicsList.add(comic);
-                    }
+                    Log.d("test", comics.toString());
+                    Type comicType = new TypeToken<List<ComicPreview>>(){}.getType();
+                    comicsList = new Gson().fromJson(comics.toString(), comicType);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 mComicsListManager = new ComicsListingManager(comicsList);
                 mGridView.setAdapter(new GroupBrowserAdapter());
-
             }
         });
     }
@@ -237,7 +234,7 @@ public class LibraryFragment extends Fragment
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            Comic comic = mComicsListManager.getComicAtIndex(position);
+            ComicPreview comic = mComicsListManager.getComicAtIndex(position);
 
             if (convertView == null) {
                 convertView = getActivity().getLayoutInflater().inflate(R.layout.card_group, parent, false);
@@ -249,7 +246,7 @@ public class LibraryFragment extends Fragment
                     .into(groupImageView);
 
             TextView tv = (TextView) convertView.findViewById(R.id.comic_group_folder);
-            tv.setText(comic.getName());
+            tv.setText(comic.getTitle());
 
             return convertView;
         }

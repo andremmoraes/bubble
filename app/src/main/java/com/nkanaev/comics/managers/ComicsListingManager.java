@@ -1,13 +1,14 @@
 package com.nkanaev.comics.managers;
 
 import com.nkanaev.comics.model.Comic;
+import com.nkanaev.comics.model.ComicPreview;
 
 import java.util.List;
 
 public class ComicsListingManager {
-    private final List<Comic> mComics;
+    private final List<ComicPreview> mComics;
 
-    public ComicsListingManager(List<Comic> comics) {
+    public ComicsListingManager(List<ComicPreview> comics) {
         /*Collections.sort(comics, new Comparator<Comic>() {
             @Override
             public int compare(Comic lhs, Comic rhs) {
@@ -19,7 +20,7 @@ public class ComicsListingManager {
         mComics = comics;
     }
 
-    public Comic getComicAtIndex(int idx) {
+    public ComicPreview getComicAtIndex(int idx) {
         return mComics.get(idx);
     }
 
