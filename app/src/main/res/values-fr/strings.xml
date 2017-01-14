@@ -34,7 +34,7 @@
     <string name="drawer_open">Ouvrir le volet de navigation</string>
     <string name="drawer_close">Fermer le volet de navigation</string>
 
-    <string name="menu_library">Bibliothèque</string>
+    <string name="menu_popular">Bibliothèque</string>
     <string name="menu_browser">Parcourir</string>
     <string name="menu_about">À propos</string>
 

@@ -25,7 +25,7 @@
     <string name="drawer_open">Abrir panel de navegación</string>
     <string name="drawer_close">Cerrar el panel de navegación</string>
 
-    <string name="menu_library">Biblioteca</string>
+    <string name="menu_popular">Biblioteca</string>
     <string name="menu_browser">Buscador</string>
     <string name="menu_about">Acerca de</string>
 

@@ -4,7 +4,7 @@
            android:checkableBehavior="single">
         <item android:id="@+id/drawer_menu_library"
               android:icon="@drawable/ic_my_library_books_grey600_24dp"
-              android:title="@string/menu_library"/>
+              android:title="@string/menu_popular"/>
         <item android:id="@+id/drawer_menu_browser"
               android:icon="@drawable/ic_folder_grey600_24dp"
               android:title="@string/menu_browser"/>

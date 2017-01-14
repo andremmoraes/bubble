@@ -41,13 +41,11 @@ import cz.msebera.android.httpclient.Header;
 
 public class LibraryFragment extends Fragment
         implements
-        DirectorySelectDialog.OnDirectorySelectListener,
         AdapterView.OnItemClickListener,
         SwipeRefreshLayout.OnRefreshListener {
     private final static String BUNDLE_DIRECTORY_DIALOG_SHOWN = "BUNDLE_DIRECTORY_DIALOG_SHOWN";
 
     private ComicsListingManager mComicsListManager;
-    private DirectorySelectDialog mDirectorySelectDialog;
     private SwipeRefreshLayout mRefreshLayout;
     private View mEmptyView;
     private GridView mGridView;
@@ -60,9 +58,6 @@ public class LibraryFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDirectorySelectDialog = new DirectorySelectDialog(getActivity());
-        mDirectorySelectDialog.setCurrentDirectory(Environment.getExternalStorageDirectory());
-        mDirectorySelectDialog.setOnDirectorySelectListener(this);
 
         getComics();
 
@@ -106,7 +101,7 @@ public class LibraryFragment extends Fragment
         mGridView.setNumColumns(numColumns);
 
         showEmptyMessage(false);
-        getActivity().setTitle("Popular");
+        getActivity().setTitle(R.string.menu_popular);
 
         return view;
     }
@@ -120,21 +115,7 @@ public class LibraryFragment extends Fragment
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(BUNDLE_DIRECTORY_DIALOG_SHOWN,
-                (mDirectorySelectDialog != null) && mDirectorySelectDialog.isShowing());
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public void onDirectorySelect(File file) {
-        SharedPreferences preferences = MainApplication.getPreferences();
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(Constants.SETTINGS_LIBRARY_DIR, file.getAbsolutePath());
-        editor.apply();
-
-        Scanner.getInstance().forceScanLibrary();
-        showEmptyMessage(false);
-        setLoading(true);
     }
 
     @Override
@@ -148,10 +129,7 @@ public class LibraryFragment extends Fragment
 
     @Override
     public void onRefresh() {
-        if (!Scanner.getInstance().isRunning()) {
-            setLoading(true);
-            Scanner.getInstance().scanLibrary();
-        }
+        //setLoading(true); // TODO
     }
 
     private void getComics() {

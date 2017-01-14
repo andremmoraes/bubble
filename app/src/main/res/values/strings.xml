@@ -25,7 +25,7 @@
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
 
-    <string name="menu_library">Library</string>
+    <string name="menu_popular">Popular</string>
     <string name="menu_browser">Browser</string>
     <string name="menu_about">About</string>
 
