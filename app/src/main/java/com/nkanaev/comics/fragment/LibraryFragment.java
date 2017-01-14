@@ -71,10 +71,8 @@ public class LibraryFragment extends Fragment
     @Override
     public void onResume() {
         super.onResume();
-        //Scanner.getInstance().addUpdateHandler(mUpdateHandler);
-        if (Scanner.getInstance().isRunning()) {
-            setLoading(true);
-        }
+        setLoading(true);
+        getComics();
     }
 
     @Override
@@ -131,7 +129,8 @@ public class LibraryFragment extends Fragment
 
     @Override
     public void onRefresh() {
-        setLoading(false); // TODO
+        setLoading(true); // TODO
+        getComics();
     }
 
     private void getComics() {
@@ -149,6 +148,7 @@ public class LibraryFragment extends Fragment
                 }
                 mComicsListManager = new ComicsListingManager(comicsList);
                 mGridView.setAdapter(new GroupBrowserAdapter());
+                setLoading(false);
             }
         });
     }

@@ -74,6 +74,7 @@ public class LibraryBrowserFragment extends Fragment
         super.onCreate(savedInstanceState);
         mSlug = getArguments().getString(PARAM_SLUG);
         mUrl = getArguments().getString(PARAM_URL);
+        mName = getArguments().getString(PARAM_NAME);
         getComics();
         setHasOptionsMenu(true);
     }
