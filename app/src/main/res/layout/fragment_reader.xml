@@ -4,7 +4,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/darkest">
-    <com.nkanaev.comics.view.ComicViewPager
+    <net.jzhang.readcomics.view.ComicViewPager
             android:id="@+id/viewPager"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

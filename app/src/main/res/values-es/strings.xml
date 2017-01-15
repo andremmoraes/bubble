@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bubble</string>
+    <string name="app_name">Bubble for ReadComics</string>
     <string name="app_description">Lector de cómics para android</string>
 
     <string name="action_refresh">Actualizar</string>
@@ -49,4 +49,5 @@
 
     <string name="library_empty">Su colección parece vacía. Haz clic en el icono \"carpeta\" para seleccionar el directorio de la Biblioteca</string>
     <string name="warning_missing_file">Faltan archivos. Por favor, actualice la Biblioteca</string>
+    <string name="menu_list">A-Z List</string>
 </resources>

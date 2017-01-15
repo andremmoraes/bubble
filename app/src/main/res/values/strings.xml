@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bubble</string>
+    <string name="app_name">Bubble for ReadComics</string>
     <string name="app_description">Android comic reader</string>
 
     <string name="action_refresh">Refresh</string>

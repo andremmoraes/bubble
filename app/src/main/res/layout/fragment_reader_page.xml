@@ -3,7 +3,7 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
-    <com.nkanaev.comics.view.PageImageView
+    <net.jzhang.readcomics.view.PageImageView
             android:id="@+id/pageImageView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -12,7 +12,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@color/lightest">
-        <com.nkanaev.comics.view.GroupImageView
+        <net.jzhang.readcomics.view.GroupImageView
                 android:id="@+id/card_group_imageview"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"/>

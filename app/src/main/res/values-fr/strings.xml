@@ -9,7 +9,7 @@
 		without any warrant
 	-->
 	
-    <string name="app_name">Bubble</string>
+    <string name="app_name">Bubble for ReadComics</string>
     <string name="app_description">Lecteur de BDs pour Android</string>
 
     <string name="action_refresh">Rafraichir</string>
@@ -57,4 +57,5 @@
     <string name="warning_missing_file"></string>
     <string name="library_header_all"></string>
     <string name="library_header_recent"></string>
+    <string name="menu_list">A-Z List</string>
 </resources>
