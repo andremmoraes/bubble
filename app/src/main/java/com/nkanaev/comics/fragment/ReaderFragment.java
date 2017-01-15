@@ -90,7 +90,7 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     private Mode mMode;
     private String mSlug;
     private String mName;
-    private int mChapterNum;
+    private String mChapterNum;
 
     public enum Mode {
         MODE_LIBRARY,
@@ -104,12 +104,12 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         RESOURCE_VIEW_MODE.put(R.id.view_mode_fit_width, Constants.PageViewMode.FIT_WIDTH);
     }
 
-    public static ReaderFragment create(String comicId, int chapter) {
+    public static ReaderFragment create(String comicId, String chapter) {
         ReaderFragment fragment = new ReaderFragment();
         Bundle args = new Bundle();
         args.putSerializable(PARAM_MODE, Mode.MODE_LIBRARY);
         args.putString(PARAM_HANDLER, comicId);
-        args.putInt(PARAM_CHAPTER, chapter);
+        args.putString(PARAM_CHAPTER, chapter);
         fragment.setArguments(args);
         return fragment;
     }
@@ -135,7 +135,7 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         if (mode == Mode.MODE_LIBRARY) {
             mSlug = bundle.getString(PARAM_HANDLER);
             mName = bundle.getString(PARAM_NAME);
-            mChapterNum = bundle.getInt(PARAM_CHAPTER);
+            mChapterNum = bundle.getString(PARAM_CHAPTER);
             //mChapter = Storage.getStorage(getActivity()).getComic(comicId);
             //file = mChapter.getFile();
             ReadComicsAPI.get("comic/" + mSlug + "/" + mChapterNum, null, new JsonHttpResponseHandler() {

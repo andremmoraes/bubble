@@ -12,8 +12,12 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+
 import com.nkanaev.comics.R;
+import com.nkanaev.comics.fragment.AZListFragment;
 import com.nkanaev.comics.fragment.AboutFragment;
 import com.nkanaev.comics.fragment.BrowserFragment;
 import com.nkanaev.comics.fragment.HeaderFragment;
@@ -64,12 +68,11 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
                 R.string.drawer_open, R.string.drawer_close);
         mDrawerLayout.setDrawerListener(mDrawerToggle);
 
-        Scanner.getInstance().scanLibrary();
+        //Scanner.getInstance().scanLibrary();
 
         if (savedInstanceState == null) {
-            setFragment(new LibraryFragment());
-            setNavBar();
-            mCurrentNavItem = R.id.drawer_menu_library;
+            setFragment(new AZListFragment());
+            mCurrentNavItem = R.id.drawer_menu_list;
             navigationView.getMenu().findItem(mCurrentNavItem).setChecked(true);
         }
         else {
@@ -99,13 +102,6 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
 
     public Picasso getPicasso() {
         return mPicasso;
-    }
-
-    private void setNavBar() {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.header, new HeaderFragment())
-                .commit();
     }
 
     private void setFragment(Fragment fragment) {
@@ -149,6 +145,9 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
                 switch (menuItem.getItemId()) {
                     case R.id.drawer_menu_library:
                         setFragment(new LibraryFragment());
+                        break;
+                    case R.id.drawer_menu_list:
+                        setFragment(new AZListFragment());
                         break;
                     case R.id.drawer_menu_browser:
                         setFragment(new BrowserFragment());

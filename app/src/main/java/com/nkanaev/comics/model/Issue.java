@@ -5,13 +5,13 @@ package com.nkanaev.comics.model;
  */
 
 public class Issue {
-    private int chapter;
+    private String chapter;
     private String url;
     private String cover;
     private String name;
     private String date;
 
-    public int getChapter() {
+    public String getChapter() {
         return chapter;
     }
 

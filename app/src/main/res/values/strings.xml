@@ -26,7 +26,8 @@
     <string name="drawer_close">Close navigation drawer</string>
 
     <string name="menu_popular">Popular</string>
-    <string name="menu_browser">Browser</string>
+    <string name="menu_list">A-Z List</string>
+    <string name="menu_browser">File Browser</string>
     <string name="menu_about">About</string>
 
     <string name="library_header_recent">Recent</string>
