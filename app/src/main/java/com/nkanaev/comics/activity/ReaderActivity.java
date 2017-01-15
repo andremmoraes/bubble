@@ -35,7 +35,7 @@ public class ReaderActivity extends AppCompatActivity {
                 ReaderFragment.Mode mode = (ReaderFragment.Mode) extras.getSerializable(ReaderFragment.PARAM_MODE);
 
                 if (mode == ReaderFragment.Mode.MODE_LIBRARY)
-                    fragment = ReaderFragment.create(extras.getString(ReaderFragment.PARAM_HANDLER), extras.getString(ReaderFragment.PARAM_CHAPTER));
+                    fragment = ReaderFragment.create(extras.getString(ReaderFragment.PARAM_HANDLER), extras.getString(ReaderFragment.PARAM_NAME), extras.getString(ReaderFragment.PARAM_CHAPTER), extras.getString(ReaderFragment.PARAM_ISSUES), extras.getInt(ReaderFragment.PARAM_POSITION));
                 else
                     fragment = ReaderFragment.create((File) extras.getSerializable(ReaderFragment.PARAM_HANDLER));
                 setFragment(fragment);

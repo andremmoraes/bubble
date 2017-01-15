@@ -148,11 +148,13 @@ public class LibraryBrowserFragment extends Fragment
         return true;
     }
 
-    public void openComic(Issue issue) {
+    public void openComic(Issue issue, int position) {
         Intent intent = new Intent(getActivity(), ReaderActivity.class);
         intent.putExtra(ReaderFragment.PARAM_HANDLER, mSlug);
         intent.putExtra(ReaderFragment.PARAM_NAME, issue.getName());
         intent.putExtra(ReaderFragment.PARAM_CHAPTER, issue.getChapter());
+        intent.putExtra(ReaderFragment.PARAM_ISSUES, new Gson().toJson(mIssues));
+        intent.putExtra(ReaderFragment.PARAM_POSITION, position);
         intent.putExtra(ReaderFragment.PARAM_MODE, ReaderFragment.Mode.MODE_LIBRARY);
         startActivity(intent);
     }
@@ -397,7 +399,7 @@ public class LibraryBrowserFragment extends Fragment
         public void onClick(View v) {
             int i = getAdapterPosition();
             Issue issue = getIssueAtPosition(i);
-            openComic(issue);
+            openComic(issue, i);
         }
     }
 }

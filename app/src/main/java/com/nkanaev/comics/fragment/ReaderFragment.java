@@ -21,14 +21,17 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.view.PagerAdapter;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.nkanaev.comics.Constants;
 import com.nkanaev.comics.R;
+import com.nkanaev.comics.activity.ReaderActivity;
 import com.nkanaev.comics.managers.LocalComicHandler;
 import com.nkanaev.comics.managers.ReadComicsNetworkComicHandler;
 import com.nkanaev.comics.managers.Utils;
 import com.nkanaev.comics.model.Chapter;
 import com.nkanaev.comics.model.Comic;
+import com.nkanaev.comics.model.Issue;
 import com.nkanaev.comics.model.ReadComicsAPI;
 import com.nkanaev.comics.model.Storage;
 import com.nkanaev.comics.parsers.ParserFactory;
@@ -43,7 +46,9 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -56,6 +61,8 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     public static final String PARAM_HANDLER = "PARAM_HANDLER";
     public static final String PARAM_NAME = "PARAM_NAME";
     public static final String PARAM_CHAPTER = "PARAM_CHAPTER";
+    public static final String PARAM_POSITION = "PARAM_POSITION";
+    public static final String PARAM_ISSUES = "PARAM_ISSUES";
     public static final String PARAM_MODE = "PARAM_MODE";
 
     public static final String STATE_FULLSCREEN = "STATE_FULLSCREEN";
@@ -91,6 +98,8 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     private String mSlug;
     private String mName;
     private String mChapterNum;
+    private int mPosition;
+    private List<Issue> mIssues;
 
     public enum Mode {
         MODE_LIBRARY,
@@ -104,12 +113,15 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         RESOURCE_VIEW_MODE.put(R.id.view_mode_fit_width, Constants.PageViewMode.FIT_WIDTH);
     }
 
-    public static ReaderFragment create(String comicId, String chapter) {
+    public static ReaderFragment create(String slug, String name, String chapter, String issuesJson, int position) {
         ReaderFragment fragment = new ReaderFragment();
         Bundle args = new Bundle();
         args.putSerializable(PARAM_MODE, Mode.MODE_LIBRARY);
-        args.putString(PARAM_HANDLER, comicId);
+        args.putString(PARAM_HANDLER, slug);
+        args.putString(PARAM_NAME, name);
         args.putString(PARAM_CHAPTER, chapter);
+        args.putString(PARAM_ISSUES, issuesJson);
+        args.putInt(PARAM_POSITION, position);
         fragment.setArguments(args);
         return fragment;
     }
@@ -136,6 +148,9 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
             mSlug = bundle.getString(PARAM_HANDLER);
             mName = bundle.getString(PARAM_NAME);
             mChapterNum = bundle.getString(PARAM_CHAPTER);
+            Type issueListType = new TypeToken<List<Issue>>(){}.getType();
+            mIssues = new Gson().fromJson(bundle.getString(PARAM_ISSUES), issueListType);
+            mPosition = bundle.getInt(PARAM_POSITION);
             //mChapter = Storage.getStorage(getActivity()).getComic(comicId);
             //file = mChapter.getFile();
             ReadComicsAPI.get("comic/" + mSlug + "/" + mChapterNum, null, new JsonHttpResponseHandler() {
@@ -680,6 +695,9 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         if (mChapter != null) {
             //Comic c = Storage.getStorage(getActivity()).getPrevComic(mChapter);
             //confirmSwitch(c, R.string.switch_prev_comic);
+            if (mMode == Mode.MODE_LIBRARY) {
+                confirmSwitch(mPosition - 1, R.string.switch_prev_comic);
+            }
         }
     }
 
@@ -687,7 +705,35 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
         if (mChapter != null) {
             //Comic c = Storage.getStorage(getActivity()).getNextComic(mChapter);
             //confirmSwitch(c, R.string.switch_next_comic);
+            if (mMode == Mode.MODE_LIBRARY) {
+                confirmSwitch(mPosition + 1, R.string.switch_next_comic);
+            }
         }
+    }
+
+    private void confirmSwitch(final int position, int titleRes) {
+        final Issue newIssue = mIssues.get(position);
+        if (newIssue == null)
+            return;
+
+        AlertDialog dialog = new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
+                .setTitle(titleRes)
+                .setMessage(newIssue.getName())
+                .setPositiveButton(R.string.switch_action_positive, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ReaderActivity activity = (ReaderActivity) getActivity();
+                        activity.setFragment(ReaderFragment.create(mSlug, newIssue.getName(), newIssue.getChapter(), new Gson().toJson(mIssues), position));
+                    }
+                })
+                .setNegativeButton(R.string.switch_action_negative, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //mNewComic = null;
+                    }
+                })
+                .create();
+        dialog.show();
     }
 
     private void confirmSwitch(Chapter newChapter, int titleRes) {
