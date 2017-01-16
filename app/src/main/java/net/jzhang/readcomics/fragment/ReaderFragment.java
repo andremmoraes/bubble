@@ -728,9 +728,9 @@ public class ReaderFragment extends Fragment implements View.OnTouchListener {
     }
 
     private void confirmSwitch(final int position, int titleRes) {
-        final Issue newIssue = mIssues.get(position);
-        if (newIssue == null)
+        if (position < 0 || position == mIssues.size())
             return;
+        final Issue newIssue = mIssues.get(position);
 
         AlertDialog dialog = new AlertDialog.Builder(getActivity(), R.style.AppCompatAlertDialogStyle)
                 .setTitle(titleRes)
